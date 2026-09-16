@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remedial Asesmen Sumatif IPA - MTsN 1 Kota Malang</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none !important; }
+        .tab-active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: bold; }
+        @media print {
+            body * { visibility: hidden; }
+            #cetak-area, #cetak-area * { visibility: visible; }
+            #cetak-area { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-800 font-sans">
+
+    <!-- Header -->
+    <header class="bg-green-700 text-white p-4 shadow-md text-center">
+        <h1 class="text-2xl font-bold" id="app-title">Remedial Asesmen Sumatif IPA</h1>
+        <h2 class="text-lg">MTsN 1 Kota Malang</h2>
+        <p class="text-sm mt-1 text-green-200">Disusun oleh: MGMP IPA MTs Kota Malang</p>
+    </header>
+
+    <div class="container mx-auto p-4 max-w-4xl mt-4">
+        
+        <!-- ================= LOGIN AREA ================= -->
+        <div id="login-area" class="bg-white rounded-lg shadow-lg p-6 max-w-md mx-auto">
+            <div class="flex border-b mb-4">
+                <button onclick="switchTab('siswa')" id="tab-siswa" class="flex-1 py-2 text-center tab-active focus:outline-none">Siswa</button>
+                <button onclick="switchTab('admin')" id="tab-admin" class="flex-1 py-2 text-center text-gray-500 focus:outline-none">Admin / Guru</button>
+            </div>
+
+            <!-- Login Siswa -->
+            <div id="form-siswa">
+                <h3 class="text-xl font-bold mb-4 text-center">Login Siswa</h3>
+                <input type="text" id="s-nama" placeholder="Nama Lengkap" class="w-full border p-2 rounded mb-3" required>
+                <select id="s-kelas" class="w-full border p-2 rounded mb-3">
+                    <option value="" disabled selected>Pilih Kelas</option>
+                    <option value="IX A">IX A</option><option value="IX B">IX B</option>
+                    <option value="IX C">IX C</option><option value="IX D">IX D</option>
+                    <option value="IX E">IX E</option><option value="IX F">IX F</option>
+                    <option value="IX G">IX G</option><option value="IX H">IX H</option>
+                    <option value="IX I">IX I</option><option value="IX J">IX J</option>
+                    <option value="IX K">IX K</option><option value="IX L">IX L</option>
+                    <option value="IX M">IX M</option>
+                </select>
+                <input type="password" id="s-presensi" placeholder="No. Presensi (Sebagai Password)" class="w-full border p-2 rounded mb-4" required>
+                <button onclick="loginSiswa()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 font-bold">Mulai Mengerjakan</button>
+            </div>
+
+            <!-- Login Admin -->
+            <div id="form-admin" class="hidden">
+                <h3 class="text-xl font-bold mb-4 text-center">Login Admin</h3>
+                <p class="text-xs text-center text-red-500 mb-2">Default Username: admin | Password: admin123</p>
+                <input type="text" id="a-user" placeholder="Username" class="w-full border p-2 rounded mb-3">
+                <input type="password" id="a-pass" placeholder="Password" class="w-full border p-2 rounded mb-4">
+                <button onclick="loginAdmin()" class="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700 font-bold">Login Admin</button>
+            </div>
+        </div>
+
+        <!-- ================= ADMIN DASHBOARD ================= -->
+        <div id="admin-dashboard" class="hidden bg-white rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h2 class="text-2xl font-bold text-gray-700">Dashboard Admin</h2>
+                <button onclick="logout()" class="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600">Logout</button>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="startTest('admin')" class="bg-blue-100 border-2 border-blue-500 text-blue-700 p-4 rounded hover:bg-blue-200 font-bold">Uji Coba Soal (Test Drive)</button>
+                <button onclick="alert('Fitur edit soal tersedia pada versi pengembangan lanjutan. Soal saat ini dimuat dari sistem.')" class="bg-yellow-100 border-2 border-yellow-500 text-yellow-700 p-4 rounded hover:bg-yellow-200 font-bold">Edit Soal (Demo)</button>
+                <button onclick="changeAdminPass()" class="bg-purple-100 border-2 border-purple-500 text-purple-700 p-4 rounded hover:bg-purple-200 font-bold">Ganti Password Admin</button>
+                <button onclick="clearSiswaData()" class="bg-red-100 border-2 border-red-500 text-red-700 p-4 rounded hover:bg-red-200 font-bold">Reset Data Ujian Siswa</button>
+            </div>
+        </div>
+
+        <!-- ================= UJIAN AREA ================= -->
+        <div id="exam-area" class="hidden">
+            <div class="bg-white rounded-lg shadow-lg p-4 mb-4 flex justify-between items-center sticky top-0 border-b-4 border-green-600 z-10">
+                <div>
+                    <p class="font-bold">Peserta: <span id="info-nama" class="text-blue-600"></span></p>
+                    <p class="text-sm">Kelas: <span id="info-kelas"></span> | Presensi: <span id="info-presensi"></span></p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-600">Sisa Waktu</p>
+                    <p id="timer" class="text-2xl font-mono font-bold text-red-600">30:00</p>
+                </div>
+            </div>
+
+            <div id="quiz-container" class="bg-white rounded-lg shadow-lg p-6 mb-4">
+                <!-- Soal akan dirender di sini -->
+            </div>
+
+            <button onclick="submitExam()" class="w-full bg-green-600 text-white p-3 rounded text-lg font-bold hover:bg-green-700">Kumpulkan Jawaban</button>
+        </div>
+
+        <!-- ================= HASIL AREA ================= -->
+        <div id="result-area" class="hidden bg-white rounded-lg shadow-lg p-8 text-center" id="cetak-area">
+            <h2 class="text-3xl font-bold mb-2">Hasil Remedial Asesmen</h2>
+            <h3 class="text-xl mb-4 text-gray-600">Materi: Sistem Koordinasi & Homeostasis</h3>
+            <div class="border p-6 rounded bg-gray-50 my-6 inline-block w-full max-w-md text-left">
+                <p><strong>Nama:</strong> <span id="res-nama"></span></p>
+                <p><strong>Kelas:</strong> <span id="res-kelas"></span></p>
+                <p><strong>No. Presensi:</strong> <span id="res-presensi"></span></p>
+                <hr class="my-4">
+                <p class="text-center text-gray-600 mb-1">Nilai Akhir</p>
+                <p class="text-6xl font-bold text-center text-blue-600" id="res-nilai">0</p>
+                <p class="text-center mt-3 font-bold" id="res-status"></p>
+                <p class="text-center text-sm text-gray-500 mt-1">KKM: 80</p>
+            </div>
+            <br>
+            <button onclick="window.print()" class="no-print bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700">Download / Cetak Hasil (PDF)</button>
+            <button onclick="logout()" class="no-print bg-gray-500 text-white px-6 py-2 rounded font-bold hover:bg-gray-600 ml-2">Kembali ke Beranda</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DATA SOAL ---
+        const soalData = [
+            // 15 Soal PG Biasa (Tipe: pg)
+            { id: 1, tipe: 'pg', teks: "Andi sedang memasak. Tiba-tiba tangannya tanpa sengaja menyentuh panci yang panas, dan ia langsung menarik tangannya dengan sangat cepat. Urutan jalannya impuls saraf pada peristiwa tersebut adalah...", opsi: ["Reseptor -> saraf sensorik -> otak -> saraf motorik -> efektor", "Reseptor -> saraf sensorik -> sumsum tulang belakang -> saraf motorik -> efektor", "Efektor -> saraf motorik -> otak -> saraf sensorik -> reseptor", "Saraf sensorik -> reseptor -> sumsum tulang belakang -> saraf motorik -> efektor"], kunci: 1 },
+            { id: 2, tipe: 'pg', teks: "Saat cuaca sangat panas atau sehabis berolahraga, tubuh kita akan mengeluarkan banyak keringat. Tujuan utama dari proses fisiologis ini dalam konsep homeostasis adalah...", opsi: ["Membuang kelebihan air agar ginjal tidak rusak", "Menurunkan suhu tubuh melalui penguapan air di permukaan kulit", "Mengeluarkan racun yang menumpuk di otot", "Mencegah terjadinya dehidrasi pada sel-sel tubuh"], kunci: 1 },
+            { id: 3, tipe: 'pg', teks: "Rina berjalan dari halaman sekolah yang sangat terang benderang menuju ruang kelas yang agak gelap. Beberapa saat kemudian, pupil matanya akan mengalami perubahan yaitu...", opsi: ["Mengecil, untuk mengurangi cahaya yang masuk", "Mengecil, agar fokus penglihatan menjadi tajam", "Membesar, agar lebih banyak cahaya yang masuk ke retina", "Tidak berubah, karena dikendalikan saraf sadar"], kunci: 2 },
+            { id: 4, tipe: 'pg', teks: "Setelah makan porsi besar yang kaya karbohidrat, kadar glukosa dalam darah Budi meningkat tajam. Organ yang akan segera merespons untuk menstabilkan kondisi (homeostasis) ini dan hormon yang dikeluarkannya adalah...", opsi: ["Ginjal mengeluarkan hormon ADH", "Hati mengeluarkan hormon empedu", "Pankreas mengeluarkan hormon insulin", "Pankreas mengeluarkan hormon glukagon"], kunci: 2 },
+            { id: 5, tipe: 'pg', teks: "Seseorang yang berada di daerah dingin cenderung lebih sering membuang air kecil (urine). Hal ini berkaitan erat dengan mekanisme homeostasis, karena...", opsi: ["Tubuh memecah lemak menghasilkan banyak air", "Keringat tidak diproduksi sehingga kelebihan air dibuang lewat ginjal", "Saraf parasimpatik menekan kerja kandung kemih", "Ginjal berhenti menyaring darah"], kunci: 1 },
+            { id: 6, tipe: 'pg', teks: "Ketika kamu tiba-tiba dikejar anjing peliharaan tetangga, detak jantungmu berdebar cepat, napas menjadi memburu, dan kamu bisa berlari lebih cepat dari biasanya. Kelenjar yang berperan besar dalam situasi 'fight or flight' ini adalah...", opsi: ["Kelenjar tiroid", "Kelenjar pankreas", "Kelenjar adrenal", "Kelenjar pituitari"], kunci: 2 },
+            { id: 7, tipe: 'pg', teks: "Pak Yanto mengalami benturan hebat pada bagian belakang kepalanya akibat kecelakaan. Sejak saat itu, ia sering kehilangan keseimbangan saat berjalan. Bagian sistem saraf pusat yang kemungkinan besar mengalami gangguan adalah...", opsi: ["Otak besar (Serebrum)", "Otak kecil (Serebelum)", "Sumsum lanjutan (Medula oblongata)", "Sumsum tulang belakang"], kunci: 1 },
+            { id: 8, tipe: 'pg', teks: "Mekanisme pengingat rasa haus ketika tubuh kekurangan cairan diatur oleh pusat kendali homeostasis yang berada di otak, yaitu...", opsi: ["Talamus", "Hipotalamus", "Korteks serebral", "Serebelum"], kunci: 1 },
+            { id: 9, tipe: 'pg', teks: "Impuls saraf berpindah dari satu neuron ke neuron lainnya melewati celah sempit yang disebut sinapsis. Zat kimia yang berfungsi menghantarkan impuls menyeberangi sinapsis ini dinamakan...", opsi: ["Neurotransmiter", "Hormon", "Enzim", "Plasma darah"], kunci: 0 },
+            { id: 10, tipe: 'pg', teks: "Berdasarkan fungsinya, sistem saraf otonom terbagi menjadi simpatik dan parasimpatik yang kerjanya saling berlawanan (antagonis). Jika saraf simpatik mempercepat denyut jantung, maka kerja parasimpatik pada organ pencernaan (lambung/usus) adalah...", opsi: ["Menghambat gerak peristaltik usus", "Meningkatkan sekresi getah pencernaan dan gerak usus", "Mengecilkan ukuran lambung", "Menghentikan total proses pencernaan"], kunci: 1 },
+            { id: 11, tipe: 'pg', teks: "Santi sering merasa cepat lelah, detak jantungnya lambat, dan berat badannya terus naik meskipun ia makan dalam porsi yang sedikit. Dokter mendiagnosis adanya gangguan sekresi hormon yang mengatur metabolisme tubuh. Kelenjar yang bermasalah adalah...", opsi: ["Tiroid", "Timus", "Paratiroid", "Pankreas"], kunci: 0 },
+            { id: 12, tipe: 'pg', teks: "Kalsium dalam darah harus dijaga kestabilannya. Jika kadar kalsium dalam darah terlalu rendah, kelenjar paratiroid akan merespons dengan mengeluarkan hormon parathormon (PTH) yang memicu...", opsi: ["Penyimpanan kalsium di tulang", "Pelepasan kalsium dari tulang ke dalam darah", "Pembuangan kalsium secara masif lewat urine", "Penyerapan kalsium dari otot"], kunci: 1 },
+            { id: 13, tipe: 'pg', teks: "Dalam mengatur kadar air dalam darah, jika darah terlalu pekat (kurang air), kelenjar pituitari di otak akan mensekresikan hormon ADH. Efek dari hormon ADH pada ginjal adalah...", opsi: ["Mencegah ginjal menyerap kembali air sehingga urine menjadi banyak", "Meningkatkan penyerapan kembali air (reabsorpsi) sehingga urine pekat", "Menghancurkan sel darah merah untuk mendapatkan cairan", "Memicu ginjal memproduksi sel darah putih"], kunci: 1 },
+            { id: 14, tipe: 'pg', teks: "Bagian dari sel saraf (neuron) yang berfungsi menerima rangsangan dari reseptor atau neuron lain lalu meneruskannya ke badan sel adalah...", opsi: ["Dendrit", "Akson", "Selubung Mielin", "Nodus Ranvier"], kunci: 0 },
+            { id: 15, tipe: 'pg', teks: "Homeostasis juga mengatur siklus tidur dan bangun (ritme sirkadian). Hormon yang diproduksi saat kondisi lingkungan gelap dan membuat kita merasa ngantuk adalah...", opsi: ["Insulin", "Adrenalin", "Melatonin", "Tiroksin"], kunci: 2 },
+            
+            // 2 Soal PG Kompleks (Tipe: pgk) - Bisa lebih dari 1 jawaban
+            { id: 16, tipe: 'pgk', teks: "Berilah tanda centang (✓) pada fungsi-fungsi yang merupakan hasil kerja dari Sistem Saraf Simpatik! (Pilih lebih dari satu)", opsi: ["Mempercepat denyut jantung", "Memperlebar ukuran pupil mata", "Memperlambat frekuensi pernapasan", "Merangsang proses pencernaan makanan"], kunci: [0, 1] },
+            { id: 17, tipe: 'pgk', teks: "Manakah dari organ berikut ini yang termasuk ke dalam Sistem Saraf Pusat (SSP)? (Pilih lebih dari satu)", opsi: ["Otak", "Saraf somatik (saraf sadar)", "Sumsum tulang belakang", "Saraf otonom"], kunci: [0, 2] },
+
+            // 2 Soal Menjodohkan (Tipe: jodoh)
+            { id: 18, tipe: 'jodoh', teks: "Pasangkanlah kelenjar endokrin dengan hormon utama yang dihasilkannya untuk menjaga keseimbangan tubuh!", pasangan: [ {soal:"Kelenjar Pankreas", jawaban:"Insulin"}, {soal:"Kelenjar Adrenal", jawaban:"Adrenalin"} ], acakKanan: ["Adrenalin", "Insulin", "Tiroksin"] },
+            { id: 19, tipe: 'jodoh', teks: "Pasangkanlah aktivitas manusia dengan bagian sistem saraf yang mengendalikannya!", pasangan: [ {soal:"Mengingat rumus matematika", jawaban:"Otak Besar (Serebrum)"}, {soal:"Gerak refleks bersin", jawaban:"Sumsum Lanjutan (Medula Oblongata)"} ], acakKanan: ["Sumsum Lanjutan (Medula Oblongata)", "Sumsum Tulang Belakang", "Otak Besar (Serebrum)"] },
+
+            // 1 Soal Isian Singkat (Tipe: isian)
+            { id: 20, tipe: 'isian', teks: "Proses pemeliharaan keseimbangan kondisi internal tubuh (seperti suhu, glukosa, dan cairan) agar tetap stabil meskipun lingkungan luar terus berubah dinamakan proses...", kunci: "homeostasis" }
+        ];
+
+        // --- STATE & LOGIC ---
+        let currentRole = 'siswa';
+        let currentUser = null;
+        let timerInterval = null;
+        let timeLeft = 30 * 60; // 30 minutes in seconds
+
+        // Initialize admin password if not set
+        if(!localStorage.getItem('adminPass')) localStorage.setItem('adminPass', 'admin123');
+
+        // UI Tabs
+        function switchTab(role) {
+            currentRole = role;
+            document.getElementById('form-siswa').classList.toggle('hidden', role !== 'siswa');
+            document.getElementById('form-admin').classList.toggle('hidden', role !== 'admin');
+            document.getElementById('tab-siswa').className = role === 'siswa' ? 'flex-1 py-2 text-center tab-active focus:outline-none' : 'flex-1 py-2 text-center text-gray-500 focus:outline-none';
+            document.getElementById('tab-admin').className = role === 'admin' ? 'flex-1 py-2 text-center tab-active focus:outline-none' : 'flex-1 py-2 text-center text-gray-500 focus:outline-none';
+        }
+
+        // Login Siswa
+        function loginSiswa() {
+            const nama = document.getElementById('s-nama').value.trim();
+            const kelas = document.getElementById('s-kelas').value;
+            const presensi = document.getElementById('s-presensi').value.trim();
+
+            if(!nama || !kelas || !presensi) return alert("Harap isi semua data!");
+            
+            const studentId = kelas + "_" + presensi;
+            const hasTaken = localStorage.getItem('score_' + studentId);
+            
+            if(hasTaken) {
+                alert("Anda sudah mengerjakan ujian ini sebelumnya! Anda akan dialihkan ke halaman hasil.");
+                showResult(nama, kelas, presensi, hasTaken);
+                return;
+            }
+
+            currentUser = { role: 'siswa', nama, kelas, presensi, id: studentId };
+            startExam();
+        }
+
+        // Login Admin
+        function loginAdmin() {
+            const user = document.getElementById('a-user').value;
+            const pass = document.getElementById('a-pass').value;
+            const truePass = localStorage.getItem('adminPass');
+
+            if(user === 'admin' && pass === truePass) {
+                document.getElementById('login-area').classList.add('hidden');
+                document.getElementById('admin-dashboard').classList.remove('hidden');
+            } else {
+                alert("Username atau password admin salah!");
+            }
+        }
+
+        // Admin Features
+        function changeAdminPass() {
+            const newPass = prompt("Masukkan password admin yang baru:");
+            if(newPass && newPass.trim() !== '') {
+                localStorage.setItem('adminPass', newPass.trim());
+                alert("Password berhasil diubah!");
+            }
+        }
+        function clearSiswaData() {
+            if(confirm("Yakin ingin mereset seluruh data ujian siswa?")) {
+                Object.keys(localStorage).forEach(key => {
+                    if(key.startsWith('score_')) localStorage.removeItem(key);
+                });
+                alert("Data berhasil direset.");
+            }
+        }
+        function startTest(role) {
+            if(role === 'admin') {
+                currentUser = { role: 'admin', nama: 'Admin (Uji Coba)', kelas: 'Admin', presensi: '00' };
+                document.getElementById('admin-dashboard').classList.add('hidden');
+                startExam();
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            clearInterval(timerInterval);
+            document.getElementById('login-area').classList.remove('hidden');
+            document.getElementById('admin-dashboard').classList.add('hidden');
+            document.getElementById('exam-area').classList.add('hidden');
+            document.getElementById('result-area').classList.add('hidden');
+            // reset form
+            document.getElementById('s-nama').value = '';
+            document.getElementById('s-presensi').value = '';
+        }
+
+        // --- EXAM LOGIC ---
+        function startExam() {
+            document.getElementById('login-area').classList.add('hidden');
+            document.getElementById('exam-area').classList.remove('hidden');
+            
+            document.getElementById('info-nama').innerText = currentUser.nama;
+            document.getElementById('info-kelas').innerText = currentUser.kelas;
+            document.getElementById('info-presensi').innerText = currentUser.presensi;
+
+            renderQuestions();
+            
+            timeLeft = 30 * 60;
+            updateTimerUI();
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerUI();
+                if(timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert("Waktu Habis!");
+                    submitExam();
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer').innerText = `${m}:${s}`;
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+            
+            soalData.forEach((q, idx) => {
+                let html = `<div class="mb-6 p-4 border rounded bg-gray-50" id="q${q.id}">
+                                <p class="font-bold mb-3">${idx + 1}. ${q.teks}</p>`;
+                
+                if(q.tipe === 'pg') {
+                    const letters = ['A', 'B', 'C', 'D'];
+                    q.opsi.forEach((op, i) => {
+                        html += `<label class="block mb-2 cursor-pointer p-2 hover:bg-gray-200 rounded">
+                                    <input type="radio" name="ans_${q.id}" value="${i}" class="mr-2"> 
+                                    <b>${letters[i]}.</b> ${op}
+                                 </label>`;
+                    });
+                } 
+                else if (q.tipe === 'pgk') {
+                    q.opsi.forEach((op, i) => {
+                        html += `<label class="block mb-2 cursor-pointer p-2 hover:bg-gray-200 rounded">
+                                    <input type="checkbox" name="ans_${q.id}" value="${i}" class="mr-2"> 
+                                    ${op}
+                                 </label>`;
+                    });
+                }
+                else if (q.tipe === 'jodoh') {
+                    q.pasangan.forEach((p, i) => {
+                        html += `<div class="flex items-center mb-2">
+                                    <div class="w-1/2 p-2 border bg-white rounded">${p.soal}</div>
+                                    <div class="w-8 text-center font-bold">➔</div>
+                                    <select name="ans_${q.id}_${i}" class="w-1/2 p-2 border rounded">
+                                        <option value="" disabled selected>-- Pilih Jawaban --</option>`;
+                        q.acakKanan.forEach(opt => {
+                            html += `<option value="${opt}">${opt}</option>`;
+                        });
+                        html += `</select></div>`;
+                    });
+                }
+                else if (q.tipe === 'isian') {
+                    html += `<input type="text" name="ans_${q.id}" placeholder="Ketik jawaban singkat..." class="w-full border p-2 rounded">`;
+                }
+                
+                html += `</div>`;
+                container.innerHTML += html;
+            });
+        }
+
+        function submitExam() {
+            clearInterval(timerInterval);
+            let correctPoints = 0;
+            let totalPoints = 20; // 20 soal total, masing-masing bobot = 1
+
+            soalData.forEach(q => {
+                if(q.tipe === 'pg') {
+                    const selected = document.querySelector(`input[name="ans_${q.id}"]:checked`);
+                    if(selected && parseInt(selected.value) === q.kunci) correctPoints++;
+                } 
+                else if(q.tipe === 'pgk') {
+                    const selecteds = Array.from(document.querySelectorAll(`input[name="ans_${q.id}"]:checked`)).map(e => parseInt(e.value));
+                    // Check array equality
+                    if(selecteds.length === q.kunci.length && selecteds.every(val => q.kunci.includes(val))) {
+                        correctPoints++;
+                    }
+                }
+                else if(q.tipe === 'jodoh') {
+                    let allCorrect = true;
+                    q.pasangan.forEach((p, i) => {
+                        const sel = document.querySelector(`select[name="ans_${q.id}_${i}"]`);
+                        if(!sel || sel.value !== p.jawaban) allCorrect = false;
+                    });
+                    if(allCorrect) correctPoints++;
+                }
+                else if(q.tipe === 'isian') {
+                    const input = document.querySelector(`input[name="ans_${q.id}"]`);
+                    if(input && input.value.trim().toLowerCase() === q.kunci) {
+                        correctPoints++;
+                    }
+                }
+            });
+
+            // Calculate final score (Max 100)
+            const finalScore = Math.round((correctPoints / totalPoints) * 100);
+
+            // Save for Siswa
+            if(currentUser.role === 'siswa') {
+                localStorage.setItem('score_' + currentUser.id, finalScore);
+            }
+
+            showResult(currentUser.nama, currentUser.kelas, currentUser.presensi, finalScore);
+        }
+
+        function showResult(nama, kelas, presensi, score) {
+            document.getElementById('exam-area').classList.add('hidden');
+            document.getElementById('result-area').classList.remove('hidden');
+
+            document.getElementById('res-nama').innerText = nama;
+            document.getElementById('res-kelas').innerText = kelas;
+            document.getElementById('res-presensi').innerText = presensi;
+            document.getElementById('res-nilai').innerText = score;
+
+            const statusEl = document.getElementById('res-status');
+            if(score >= 80) {
+                statusEl.innerText = "TUNTAS";
+                statusEl.className = "text-center mt-3 font-bold text-green-600 text-xl";
+            } else {
+                statusEl.innerText = "BELUM TUNTAS (REMEDIAL)";
+                statusEl.className = "text-center mt-3 font-bold text-red-600 text-xl";
+            }
+        }
+    </script>
+</body>
+</html>
